@@ -18,10 +18,19 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
-  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
   background: var(--bg);
   color: var(--text);
   font-family: 'Syne', sans-serif;
+}
+
+/* ─── APP SHELL: nav + main + footer = exactamente 100dvh ─── */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 /* ─── SCROLLBAR ─── */
@@ -32,10 +41,12 @@ html, body {
 /* ─── NAVBAR ─── */
 #mainNav {
   height: var(--nav-h);
-  background: rgba(8, 11, 16, 0.92);
+  flex-shrink: 0;
+  background: rgba(8, 11, 16, 0.95);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
   z-index: 100;
+  position: relative !important; /* override Bootstrap's fixed-top */
 }
 
 .brand-dot {
@@ -74,24 +85,33 @@ html, body {
 
 /* ─── MAIN WRAPPER ─── */
 .main-wrapper {
-  padding-top: calc(var(--nav-h) + 28px);
-  padding-bottom: calc(var(--footer-h) + 28px);
-  min-height: 100vh;
-  padding-left: 24px;
-  padding-right: 24px;
+  flex: 1 1 0;
+  overflow: hidden;
+  padding: 16px 24px;
+}
+
+.main-wrapper > .row {
+  height: 100%;
 }
 
 /* ─── SIDE PANEL ─── */
 .side-panel {
-  padding-top: 4px;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-top: 2px;
+  padding-right: 6px;
+  /* quitar el gap de Bootstrap d-flex flex-column */
+  row-gap: 8px !important;
 }
 
 .stat-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  padding: 18px 20px;
+  padding: 8px 10px;
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .stat-card::before {
@@ -105,15 +125,15 @@ html, body {
 
 .stat-label {
   font-family: 'Space Mono', monospace;
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   letter-spacing: 0.15em;
   color: var(--muted2);
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 3px;
 }
 
 .stat-value {
-  font-size: 2.8rem;
+  font-size: 1.5rem;
   font-weight: 800;
   line-height: 1;
   color: var(--text);
@@ -122,9 +142,9 @@ html, body {
 .stat-value.accent-val { color: var(--accent2); }
 
 .stat-sub {
-  font-size: 0.7rem;
+  font-size: 0.62rem;
   color: var(--muted);
-  margin-top: 4px;
+  margin-top: 2px;
   font-family: 'Space Mono', monospace;
 }
 
@@ -150,9 +170,9 @@ html, body {
 
 /* Speed dots */
 .speed-card::before { background: var(--accent3); }
-.speed-dots { display: flex; gap: 6px; margin: 8px 0 4px; }
+.speed-dots { display: flex; gap: 5px; margin: 5px 0 3px; }
 .dot {
-  width: 10px; height: 10px;
+  width: 8px; height: 8px;
   border-radius: 50%;
   border: 1px solid var(--border);
   background: var(--surface2);
@@ -161,43 +181,52 @@ html, body {
 .dot.active {
   background: var(--accent3);
   border-color: var(--accent3);
-  box-shadow: 0 0 8px var(--accent3);
+  box-shadow: 0 0 6px var(--accent3);
 }
 
 /* Hint box */
 .hint-box {
   border: 1px dashed var(--border);
-  padding: 14px 16px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 .hint-box p {
-  font-size: 0.72rem;
+  font-size: 0.65rem;
   color: var(--muted2);
   font-family: 'Space Mono', monospace;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 .hint-key {
   background: var(--surface2);
   border: 1px solid var(--border);
-  padding: 2px 8px;
-  font-size: 0.62rem;
+  padding: 1px 6px;
+  font-size: 0.58rem;
   color: var(--accent);
   border-radius: 2px;
   white-space: nowrap;
 }
 
 /* ─── CANVAS FRAME ─── */
-.canvas-col { padding: 0 12px; }
+.canvas-col {
+  padding: 0 12px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
 
 .canvas-frame {
   background: var(--surface);
   border: 1px solid var(--border);
   position: relative;
   overflow: hidden;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .canvas-header {
@@ -226,7 +255,8 @@ html, body {
 #mainCanvas {
   display: block;
   width: 100%;
-  height: auto;
+  flex: 1 1 0;
+  min-height: 0;
   cursor: crosshair;
 }
 
@@ -270,13 +300,11 @@ html, body {
 /* ─── FOOTER ─── */
 .site-footer {
   height: var(--footer-h);
+  flex-shrink: 0;
   background: rgba(8, 11, 16, 0.95);
   border-top: 1px solid var(--border);
   display: flex;
   align-items: center;
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  z-index: 100;
 }
 
 .footer-inner { width: 100%; }

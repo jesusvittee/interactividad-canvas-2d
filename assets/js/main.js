@@ -3,9 +3,14 @@
   const ctx = canvas.getContext("2d");
 
   // ─── CANVAS SIZE ──────────────────────────────────────────────
-  const W = 800, H = 520;
-  canvas.width  = W;
-  canvas.height = H;
+  function resizeCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    canvas.width  = Math.floor(rect.width)  || 800;
+    canvas.height = Math.floor(rect.height) || 520;
+  }
+  resizeCanvas();
+  const W = () => canvas.width;
+  const H = () => canvas.height;
 
   // ─── PALETTE ──────────────────────────────────────────────────
   const COLORS = [
@@ -30,9 +35,9 @@
   class Circle {
     constructor(index) {
       this.id      = index;
-      this.radius  = Math.random() * 22 + 18;          // 18-40
-      this.x       = Math.random() * (W - this.radius * 2) + this.radius;
-      this.y       = H + this.radius + Math.random() * 200; // start below canvas
+      this.radius  = Math.random() * 22 + 18;
+      this.x       = Math.random() * (W() - this.radius * 2) + this.radius;
+      this.y       = H() + this.radius + Math.random() * 200;
 
       // Random horizontal drift component (wander)
       this.wanderAngle = Math.random() * Math.PI * 2;
@@ -74,14 +79,13 @@
       this.y -= speed; // primary: upward
 
       // Wrap horizontally (exit/enter sides)
-      if (this.x < -this.radius)  this.x = W + this.radius;
-      if (this.x > W + this.radius) this.x = -this.radius;
+      if (this.x < -this.radius)  this.x = W() + this.radius;
+      if (this.x > W() + this.radius) this.x = -this.radius;
 
       // Check if fully off top
       if (this.y < -this.radius && !this.fading) {
-        // respawn at bottom (it "traveled" through)
-        this.y = H + this.radius + Math.random() * 100;
-        this.x = Math.random() * (W - this.radius * 2) + this.radius;
+        this.y = H() + this.radius + Math.random() * 100;
+        this.x = Math.random() * (W() - this.radius * 2) + this.radius;
         this.wanderAngle = Math.random() * Math.PI * 2;
       }
     }
@@ -146,7 +150,7 @@
       const c = new Circle(i);
       c.wanderSpeed = (Math.random() * 0.6 + 0.4) * speed;
       // stagger spawn heights
-      c.y = H + c.radius + i * 60 + Math.random() * 80;
+      c.y = H() + c.radius + i * 60 + Math.random() * 80;
       circles.push(c);
     }
     updateUI();
@@ -204,12 +208,17 @@
   }
 
   // ─── MOUSE / CLICK EVENTS ─────────────────────────────────────
-  canvas.addEventListener("mousemove", e => {
+  function toCanvas(clientX, clientY) {
     const rect = canvas.getBoundingClientRect();
-    const scaleX = W / rect.width;
-    const scaleY = H / rect.height;
-    mouseX = (e.clientX - rect.left) * scaleX;
-    mouseY = (e.clientY - rect.top)  * scaleY;
+    return {
+      x: (clientX - rect.left) * (canvas.width  / rect.width),
+      y: (clientY - rect.top)  * (canvas.height / rect.height),
+    };
+  }
+
+  canvas.addEventListener("mousemove", e => {
+    const p = toCanvas(e.clientX, e.clientY);
+    mouseX = p.x; mouseY = p.y;
   });
 
   canvas.addEventListener("mouseleave", () => {
@@ -217,14 +226,9 @@
   });
 
   canvas.addEventListener("click", e => {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = W / rect.width;
-    const scaleY = H / rect.height;
-    const cx = (e.clientX - rect.left) * scaleX;
-    const cy = (e.clientY - rect.top)  * scaleY;
-
+    const p = toCanvas(e.clientX, e.clientY);
     for (const c of circles) {
-      if (!c.dead && !c.fading && c.contains(cx, cy)) {
+      if (!c.dead && !c.fading && c.contains(p.x, p.y)) {
         c.fading = true;
         break;
       }
@@ -237,11 +241,11 @@
     ctx.strokeStyle = "rgba(30,39,48,0.6)";
     ctx.lineWidth   = 1;
     const step = 40;
-    for (let x = 0; x <= W; x += step) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    for (let x = 0; x <= W(); x += step) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H()); ctx.stroke();
     }
-    for (let y = 0; y <= H; y += step) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    for (let y = 0; y <= H(); y += step) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W(), y); ctx.stroke();
     }
     ctx.restore();
   }
@@ -252,7 +256,7 @@
 
     // Background
     ctx.fillStyle = "#080b10";
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillRect(0, 0, W(), H());
     drawGrid();
 
     // Update hover
@@ -270,7 +274,14 @@
   }
 
   // ─── INIT ─────────────────────────────────────────────────────
-  spawnLevel(1);
-  loop();
+  // Wait one frame so the CSS layout settles before reading dimensions
+  requestAnimationFrame(() => {
+    resizeCanvas();
+    spawnLevel(1);
+    loop();
+  });
+
+  // Keep canvas in sync if window resizes
+  new ResizeObserver(() => resizeCanvas()).observe(canvas);
 
 })();
